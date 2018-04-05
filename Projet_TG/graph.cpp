@@ -273,27 +273,67 @@ void Graph::del_vertex()
 
     if(key[KEY_D])
     {
+
+        int fin(0);
         std::cout<<"Indice du sommet présent sur le graph a supprimer : "<<std::endl;
         std::cin>>temp;
 
         Vertex &remed =m_vertices.at(temp);
+        std::cout<< "removing vertex "<< temp <<" "<< remed.m_pop <<std::endl;
 
         if(m_interface && remed.m_interface)
         {
-
+            std::cout<<"2";
+            //std::cout<<temp;
             m_interface->m_main_box.remove_child(remed.m_interface->m_top_box);
             m_vertices.erase(temp);
 
-            //for(int i(0);i<m_vertices[temp].m_i)
+            std::cout<<"3";
+            for(int i(0);i<m_vertices[temp].m_in.empty();i++)
+            {
+                std::cout<<"4"<<std::endl;
 
+                std::cout <<i;
+                test_remove_edge(m_vertices[temp].m_in[i]);
+            }
 
-
+            for(int i(0);i<m_vertices[temp].m_out.empty();i++)
+            {
+                test_remove_edge(m_vertices[temp].m_out[i]);
+            }
         }
-
     }
 }
 
+/// eidx index of edge to remove
+void Graph::test_remove_edge(int eidx)
+{
+    std::cout<<"2";
+/// référence vers le Edge à enlever
+    Edge &remed=m_edges.at(eidx);
 
+    std::cout << "Removing edge " << eidx << " " << remed.m_from << "->" << remed.m_to << " " << remed.m_weight << std::endl;
+
+    /// Tester la cohérence : nombre d'arc entrants et sortants des sommets 1 et 2
+    std::cout << m_vertices[remed.m_from].m_in.size() << " " << m_vertices[remed.m_from].m_out.size() << std::endl;
+    std::cout << m_vertices[remed.m_to].m_in.size() << " " << m_vertices[remed.m_to].m_out.size() << std::endl;
+    std::cout << m_edges.size() << std::endl;
+
+    /// test : on a bien des éléments interfacés
+    if (m_interface && remed.m_interface)
+    {
+        //OK cùest bon je les qurqs su chocolqt jùqi,e
+        /// Ne pas oublier qu'on a fait ça à l'ajout de l'arc :
+        /* EdgeInterface *ei = new EdgeInterface(m_vertices[id_vert1], m_vertices[id_vert2]); */
+        /* m_interface->m_main_box.add_child(ei->m_top_edge); */
+        /* m_edges[idx] = Edge(weight, ei);*/
+        /// Le new EdgeInterface ne nécessite pas de delete car on a un shared_ptr
+        /// Le Edge ne nécessite pas non plus de delete car on n'a pas fait de new (sémantique par valeur)
+        /// mais il faut bien enlever le conteneur d'interface m_top_edge de l'arc de la main_box du graphe
+        m_interface->m_main_box.remove_child( remed.m_interface->m_top_edge );
+    }
+
+}
 
 ///DISPLAY////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -343,7 +383,7 @@ void Graph::display_edges()
     std::cout<<std::endl;
     std::cout<<std::endl;
 
-    std::cout<<m_nbedges;
+    //std::cout<<m_nbedges;
 }
 
 
@@ -394,9 +434,26 @@ void Graph::add_interfaced_vertex(int idx, double value, int x, int y, std::stri
         {
             if ((m_matP[idx][j] != 0))
             {
+                //std::cout<<j<<"coucou c'est j"<<std::endl;
+                //std::cout<<idx<<"coucou c'est idx"<<std::endl;
                 add_interfaced_edge(m_nbedges,idx,j,m_matP[idx][j]);
             }
+            else if((m_matP[j][idx] != 0))
+            {
+               add_interfaced_edge(m_nbedges,j,idx,m_matP[idx][j]);
+            }
         }
+    }
+
+    std::cout<<"preaff"<<std::endl;
+    for(const auto& elem:m_vertices[idx].m_in)
+    {
+        std::cout << elem << "affi "<<std::endl;
+    }
+
+    for(const auto& elem:m_vertices[idx].m_out)
+    {
+        std::cout << elem << "affo "<<std::endl;
     }
 }
 
@@ -419,16 +476,24 @@ void Graph::add_interfaced_edge(int idx, int id_vert1, int id_vert2, double weig
 
     if(ok==0)
     {
+
+        //m_interface->m_main_box.remove_child( remed.m_interface->m_top_edge );
+
         EdgeInterface *ei = new EdgeInterface(m_vertices[id_vert1], m_vertices[id_vert2]);
         m_interface->m_main_box.add_child(ei->m_top_edge);
         m_edges[idx] = Edge(0, 0, weight, ei);
 
         /// OOOPS ! Prendre en compte l'arc ajouté dans la topologie du graphe !
 
-        m_edges[idx].m_from = id_vert1;
+        m_edges[idx].m_from = id_vert1;//idx
 
-        m_edges[idx].m_to = id_vert2;
-        std::cout<<m_nbedges<<std::endl;
+        m_edges[idx].m_to = id_vert2;//j
+
+        m_vertices[id_vert1].m_out.push_back(idx);
+        m_vertices[id_vert2].m_in.push_back(idx);
+
+
+        //std::cout<<m_nbedges<<std::endl;
         m_nbedges++;
 
     }
@@ -436,7 +501,7 @@ void Graph::add_interfaced_edge(int idx, int id_vert1, int id_vert2, double weig
 
 void Graph::add_vertex(int path)
 {
-    int temp;
+    int temp(-1);
 
     if(key[KEY_H])
     {

@@ -139,6 +139,12 @@ class Vertex
         /// liste des indices des arcs partant du sommet : accès aux successeurs
         std::vector<int> m_out;*/
 
+        /// liste des indices des arcs arrivant au sommet : accès aux prédécesseurs
+        std::vector<int> m_in;
+
+        /// liste des indices des arcs partant du sommet : accès aux successeurs
+        std::vector<int> m_out;
+
         ///
         int m_indice_sommet;
 
@@ -203,6 +209,7 @@ class EdgeInterface
 
         // Un label de visualisation du poids de l'arc
         grman::WidgetText m_label_weight;
+
 
     public :
 
@@ -341,6 +348,7 @@ class Graph
 
         ///Methode pour supprimer des sommets
         void del_vertex();
+        void test_remove_edge(int eidx);
 
         ///aff liste sommets et arretes
         void display_vertices();

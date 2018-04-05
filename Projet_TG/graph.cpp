@@ -283,58 +283,86 @@ void Graph::del_vertex()
 
         if(m_interface && remed.m_interface)
         {
-            std::cout<<"2";
+
+            for(int i(0);i<m_vertices[temp].m_in.empty();i++)
+            {
+                std::cout<<i<<"top"<<std::endl;
+                test_remove_edge(m_vertices[temp].m_in[i]);
+            }
+
+            for(int i(0);i<m_vertices[temp].m_out.empty();i++)
+            {
+                std::cout<<i<<"top1"<<std::endl;
+                test_remove_edge(m_vertices[temp].m_out[i]);
+            }
+
+            //m_edges.erase()
+
+
+
             //std::cout<<temp;
             m_interface->m_main_box.remove_child(remed.m_interface->m_top_box);
             m_vertices.erase(temp);
 
-            std::cout<<"3";
-            for(int i(0);i<m_vertices[temp].m_in.empty();i++)
+            /*for(int i(0);i<m_vertices[temp].m_in.empty();i++)
             {
-                std::cout<<"4"<<std::endl;
-
-                std::cout <<i;
                 test_remove_edge(m_vertices[temp].m_in[i]);
             }
 
             for(int i(0);i<m_vertices[temp].m_out.empty();i++)
             {
                 test_remove_edge(m_vertices[temp].m_out[i]);
-            }
+            }*/
         }
     }
 }
 
+
+
 /// eidx index of edge to remove
 void Graph::test_remove_edge(int eidx)
 {
-    std::cout<<"2";
-/// référence vers le Edge à enlever
+    /// référence vers le Edge à enlever
     Edge &remed=m_edges.at(eidx);
-
     std::cout << "Removing edge " << eidx << " " << remed.m_from << "->" << remed.m_to << " " << remed.m_weight << std::endl;
 
-    /// Tester la cohérence : nombre d'arc entrants et sortants des sommets 1 et 2
+    /*/// Tester la cohérence : nombre d'arc entrants et sortants des sommets 1 et 2
     std::cout << m_vertices[remed.m_from].m_in.size() << " " << m_vertices[remed.m_from].m_out.size() << std::endl;
     std::cout << m_vertices[remed.m_to].m_in.size() << " " << m_vertices[remed.m_to].m_out.size() << std::endl;
-    std::cout << m_edges.size() << std::endl;
+    std::cout << m_edges.size() << std::endl;*/
 
+    std::cout<<"pre boucle  ";
     /// test : on a bien des éléments interfacés
     if (m_interface && remed.m_interface)
     {
-        //OK cùest bon je les qurqs su chocolqt jùqi,e
+        std::cout<<"boucle  ";
         /// Ne pas oublier qu'on a fait ça à l'ajout de l'arc :
         /* EdgeInterface *ei = new EdgeInterface(m_vertices[id_vert1], m_vertices[id_vert2]); */
         /* m_interface->m_main_box.add_child(ei->m_top_edge); */
-        /* m_edges[idx] = Edge(weight, ei);*/
+        /* m_edges[idx] = Edge(weight, ei); */
         /// Le new EdgeInterface ne nécessite pas de delete car on a un shared_ptr
         /// Le Edge ne nécessite pas non plus de delete car on n'a pas fait de new (sémantique par valeur)
         /// mais il faut bien enlever le conteneur d'interface m_top_edge de l'arc de la main_box du graphe
         m_interface->m_main_box.remove_child( remed.m_interface->m_top_edge );
     }
 
-}
+    /// Il reste encore à virer l'arc supprimé de la liste des entrants et sortants des 2 sommets to et from !
+    /// References sur les listes de edges des sommets from et to
+    std::vector<int> &vefrom = m_vertices[remed.m_from].m_out;
+    std::vector<int> &veto = m_vertices[remed.m_to].m_in;
+    vefrom.erase( std::remove( vefrom.begin(), vefrom.end(), eidx ), vefrom.end() );
+    veto.erase( std::remove( veto.begin(), veto.end(), eidx ), veto.end() );
 
+    /// Le Edge ne nécessite pas non plus de delete car on n'a pas fait de new (sémantique par valeur)
+    /// Il suffit donc de supprimer l'entrée de la map pour supprimer à la fois l'Edge et le EdgeInterface
+    /// mais malheureusement ceci n'enlevait pas automatiquement l'interface top_edge en tant que child de main_box !
+    m_edges.erase( eidx );
+
+    /// Tester la cohérence : nombre d'arc entrants et sortants des sommets 1 et 2
+    std::cout << m_vertices[remed.m_from].m_in.size() << " " << m_vertices[remed.m_from].m_out.size() << std::endl;
+    std::cout << m_vertices[remed.m_to].m_in.size() << " " << m_vertices[remed.m_to].m_out.size() << std::endl;
+    std::cout << m_edges.size() << std::endl;
+}
 ///DISPLAY////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///affichage du graph en console
@@ -445,15 +473,14 @@ void Graph::add_interfaced_vertex(int idx, double value, int x, int y, std::stri
         }
     }
 
-    std::cout<<"preaff"<<std::endl;
     for(const auto& elem:m_vertices[idx].m_in)
     {
-        std::cout << elem << "affi "<<std::endl;
+        std::cout << elem << " sommets qui in  m_in de "<<idx <<std::endl;
     }
 
     for(const auto& elem:m_vertices[idx].m_out)
     {
-        std::cout << elem << "affo "<<std::endl;
+        std::cout << elem << " sommets qui out de m_out de   "<<  idx <<std::endl;
     }
 }
 
@@ -481,21 +508,18 @@ void Graph::add_interfaced_edge(int idx, int id_vert1, int id_vert2, double weig
 
         EdgeInterface *ei = new EdgeInterface(m_vertices[id_vert1], m_vertices[id_vert2]);
         m_interface->m_main_box.add_child(ei->m_top_edge);
-        m_edges[idx] = Edge(0, 0, weight, ei);
+        m_edges[idx] = Edge(id_vert1, id_vert2, weight, ei);
 
         /// OOOPS ! Prendre en compte l'arc ajouté dans la topologie du graphe !
 
-        m_edges[idx].m_from = id_vert1;//idx
+        m_edges[idx].m_from = id_vert1;
+        m_edges[idx].m_to = id_vert2;
 
-        m_edges[idx].m_to = id_vert2;//j
-
-        m_vertices[id_vert1].m_out.push_back(idx);
-        m_vertices[id_vert2].m_in.push_back(idx);
-
+        m_vertices[id_vert1].m_out.push_back(id_vert2);
+        m_vertices[id_vert2].m_in.push_back(id_vert1);
 
         //std::cout<<m_nbedges<<std::endl;
         m_nbedges++;
-
     }
 }
 

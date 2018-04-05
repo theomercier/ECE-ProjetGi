@@ -8,42 +8,47 @@
 
 int main()
 {
+    int boucle=0;
     int path_Matrice;
+    int temp=-1;
+    std::string picname;
+    char a='v';
 
     /// A appeler en 1er avant d'instancier des objets graphiques etc...
     grman::init();
 
-    std::cout<< "Numero de fichier a charger : ";
-    std::cin>> path_Matrice;
-
-    /// Le nom du répertoire où se trouvent les images à charger
-    //grman::set_pictures_path("pics");
-
-    /// Un exemple de graphe
-    Graph g;
-
-    g.load_graph(path_Matrice);
-    //g.show_graph_console();
-
-    g.load_graphPOP(path_Matrice);
-    //g.show_graph_consolePOP();
-
-    g.add_vertex();
-    g.display_vertices();
-
-
-
-    /// Vous gardez la main sur la "boucle de jeu"
-    /// ( contrairement à des frameworks plus avancés )
-    while ( !key[KEY_ESC] )
+    do
     {
+        std::cout<< "Numero de fichier a charger : ";
+        std::cin>> path_Matrice;
 
-        /// Il faut appeler les méthodes d'update des objets qui comportent des widgets
-        g.update();
+        Graph g;
+        g.init(path_Matrice);
 
-        /// Mise à jour générale (clavier/souris/buffer etc...)
-        grman::mettre_a_jour();
-    }
+        /// Vous gardez la main sur la "boucle de jeu"while(fin==0)
+        /// ( contrairement à des frameworks plus avancés )
+        while ( !key[KEY_ESC] )
+        {
+            /// Il faut appeler les méthodes d'update des objets qui comportent des widgets
+            g.update();
+
+            g.add_vertex(path_Matrice);
+            g.del_vertex();
+
+            //g.save(path_Matrice);
+
+            /// Mise à jour générale (clavier/souris/buffer etc...)
+            grman::mettre_a_jour();
+        }
+
+        g.display_vertices();
+        g.display_edges();
+
+
+        std::cout<< "Quitter le jeu ? 1. oui 0.non  "<<std::endl;
+        std::cin>> boucle;
+
+    }while(boucle==0);
 
     grman::fermer_allegro();
 
